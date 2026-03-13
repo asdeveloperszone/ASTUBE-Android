@@ -1,0 +1,48 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'com.asdeveloper.astube'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "com.asdeveloper.astube"
+        minSdk 24
+        targetSdk 34
+        versionCode 1
+        versionName "1.0.0"
+    }
+
+    signingConfigs {
+        release {
+            storeFile     file(System.getenv("KEYSTORE_PATH") ?: "keystore.jks")
+            storePassword System.getenv("KEYSTORE_PASSWORD") ?: ""
+            keyAlias      System.getenv("KEY_ALIAS")         ?: "as"
+            keyPassword   System.getenv("KEY_PASSWORD")      ?: ""
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled   true
+            shrinkResources true
+            signingConfig   signingConfigs.release
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+        debug {
+            applicationIdSuffix ".debug"
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+dependencies {
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'androidx.browser:browser:1.7.0'
+    implementation 'com.google.androidbrowserhelper:androidbrowserhelper:2.5.0'
+}

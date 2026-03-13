@@ -1,0 +1,96 @@
+name: Build ASTUBE APK
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # ── 1. Checkout ───────────────────────────────────────────
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ── 2. Setup JDK 17 ──────────────────────────────────────
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: gradle
+
+      # ── 3. Setup Gradle ───────────────────────────────────────
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-version: '8.4'
+
+      # ── 4. Download gradle-wrapper.jar ────────────────────────
+      - name: Download gradle-wrapper.jar
+        run: |
+          mkdir -p gradle/wrapper
+          curl -L -o gradle/wrapper/gradle-wrapper.jar \
+            https://raw.githubusercontent.com/nicholasgasior/gsfmt/master/gradle/wrapper/gradle-wrapper.jar \
+            || \
+          wget -O gradle/wrapper/gradle-wrapper.jar \
+            "https://github.com/gradle/gradle/raw/v8.4.0/gradle/wrapper/gradle-wrapper.jar" \
+            || \
+          gradle wrapper --gradle-version 8.4
+          chmod +x gradlew
+
+      # ── 5. Decode keystore ────────────────────────────────────
+      - name: Decode keystore
+        run: |
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > app/keystore.jks
+
+      # ── 6. Build release APK ──────────────────────────────────
+      - name: Build Release APK
+        env:
+          KEYSTORE_PATH:     app/keystore.jks
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS:         ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD:      ${{ secrets.KEY_PASSWORD }}
+        run: gradle assembleRelease --no-daemon --stacktrace
+
+      # ── 7. Rename and stage APK ───────────────────────────────
+      - name: Stage APK
+        run: |
+          mkdir -p artifacts
+          cp app/build/outputs/apk/release/app-release.apk artifacts/ASTUBE-v1.0.apk
+          echo "APK size: $(du -sh artifacts/ASTUBE-v1.0.apk | cut -f1)"
+
+      # ── 8. Upload as downloadable artifact ───────────────────
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: ASTUBE-APK
+          path: artifacts/ASTUBE-v1.0.apk
+          retention-days: 30
+
+      # ── 9. Create GitHub Release ─────────────────────────────
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v1.0.${{ github.run_number }}
+          name: ASTUBE v1.0.${{ github.run_number }}
+          body: |
+            ## ASTUBE Android App
+
+            ### Install:
+            1. Download `ASTUBE-v1.0.apk` below
+            2. Enable "Install from unknown sources" in Android settings
+            3. Install and open ASTUBE
+
+            ### What's included:
+            - ✅ Full ASTUBE PWA as native Android app
+            - ✅ Creates `Downloads/ASTUBE/` folder automatically
+            - ✅ No browser bar — fullscreen experience
+            - ✅ Storage permissions handled automatically
+          files: artifacts/ASTUBE-v1.0.apk
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

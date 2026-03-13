@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.asdeveloper.astube",
+      "sha256_cert_fingerprints": [
+        "F4:83:62:4A:2D:86:22:D5:6C:C7:88:66:22:CE:A8:7B:A1:B7:18:A0:EE:46:78:81:9E:23:AA:C3:0C:B2:11:69"
+      ]
+    }
+  }
+]

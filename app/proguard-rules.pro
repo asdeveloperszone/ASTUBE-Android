@@ -1,0 +1,4 @@
+-keep class com.asdeveloper.astube.** { *; }
+-keep class com.google.androidbrowserhelper.** { *; }
+-keep class androidx.browser.** { *; }
+-dontwarn com.google.androidbrowserhelper.**
